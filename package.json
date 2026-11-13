@@ -1,0 +1,24 @@
+{
+  "name": "claude-usage-predictor",
+  "version": "0.1.0",
+  "description": "Reads the 5-hour and weekly limits of several Claude accounts and forecasts when each, and the pool of them, runs out, with boosted trees and no dependency.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "bun@1.4.4",
+  "bin": {
+    "claude-usage": "src/cli.ts"
+  },
+  "scripts": {
+    "usage": "bun src/cli.ts usage",
+    "record": "bun src/cli.ts record",
+    "forecast": "bun src/cli.ts forecast",
+    "backtest": "bun src/cli.ts backtest",
+    "demo": "bun src/cli.ts demo",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.3",
+    "typescript": "^7.0.2"
+  }
+}
