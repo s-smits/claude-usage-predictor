@@ -3,7 +3,7 @@
 Reads how much of the 5-hour and weekly limit each of your Claude accounts has used, keeps the
 readings, and forecasts when each account, and the pool of them, runs out. The forecast is
 gradient-boosted regression trees in the manner of xgboost, written out in one file, so the tool has
-no runtime dependency: it needs [Bun](https://bun.sh) and nothing else.
+no runtime dependency: it needs [Bun](https://bun.sh), or Node 22.18 or later, and nothing else.
 
 ```text
 account 1 · open · 2 live
@@ -38,8 +38,24 @@ cp .env.example .env   # ignored by Git; fill in one token an account
 bun run usage
 ```
 
-`bun link` puts `claude-usage` on your path. Bun loads the `.env` of the folder a command runs in,
+`bun link` puts `claude-usage` on your path. The `.env` of the folder a command runs in is loaded,
 so from elsewhere name the file: `bun --env-file=/path/to/.env /path/to/src/cli.ts usage`.
+
+### With Node
+
+Node 22.18 or later runs the TypeScript source as it stands, so there is nothing to build and
+nothing to install:
+
+```sh
+node src/cli.ts demo
+node src/cli.ts usage      # reads .env here, or: node --env-file=/path/to/.env src/cli.ts usage
+node src/cli.ts forecast --json
+```
+
+Every `bun run <verb>` and `claude-usage <verb>` below is `node src/cli.ts <verb>` under Node, and
+both runtimes print the same lines from the same readings. Node 22 says once that type stripping is
+experimental; `NODE_NO_WARNINGS=1` quiets it. The `claude-usage` command that `bun link` installs
+starts Bun, so under Node alone use an alias: `alias claude-usage='node /path/to/src/cli.ts'`.
 
 ## Assumptions
 
@@ -50,7 +66,7 @@ The defaults fit one way of working. Where yours differs, the tool is small enou
   works as well (`CLAUDE_CODE_OAUTH_TOKEN_WORK`), and a lone `CLAUDE_CODE_OAUTH_TOKEN` is account
   `default`.
 - **Tokens are the long-lived ones of `claude setup-token`**, kept in a `.env` beside the tool or in
-  a file named with `bun --env-file`. The tool does not read Claude Code's own credential store or
+  a file named with `--env-file`. The tool does not read Claude Code's own credential store or
   the keychain.
 - **Accounts are interchangeable.** Work moves to another account when one is spent, which is what
   the pool's lines count on. `CLAUDE_USAGE_POOL` names the accounts that holds for.
@@ -78,8 +94,9 @@ account. The tool finds every account in its environment:
 | `CLAUDE_CODE_OAUTH_TOKEN_<NAME>`, as in `CLAUDE_CODE_OAUTH_TOKEN_WORK` | `work` |
 
 A key left empty holds no account, and the plain token is not counted twice where a numbered or
-named key repeats it. The tool opens no credential file, keeps no token and prints none; a token
-goes only to `api.anthropic.com`, as the bearer of the request that reads its account.
+named key repeats it. The tool takes tokens from the environment alone, which the runtime fills from
+`.env`; it keeps no token and prints none, and a token goes only to `api.anthropic.com`, as the
+bearer of the request that reads its account.
 
 ## Commands
 
@@ -115,7 +132,7 @@ The forecast needs readings: at least one every half hour or hour, for a few day
 can be tested at all and a week or more before it is likely to beat the simple paces. Run `record`
 from a timer.
 
-cron, every 30 minutes:
+cron, every 30 minutes (with Node, put `/path/to/node` in place of `/path/to/bun`, here and below):
 
 ```cron
 */30 * * * * cd /path/to/claude-usage-predictor && /path/to/bun src/cli.ts record >> /tmp/claude-usage.log 2>&1
@@ -214,7 +231,9 @@ bun run typecheck
 bun test
 ```
 
-Zero runtime dependencies; `typescript` and `@types/bun` are for the typecheck.
+Zero runtime dependencies; `typescript` and `@types/bun` are for the typecheck. The tests run under
+Bun, and where they find a Node of 22.18 or later they run the command line under it too, and hold
+its output to Bun's line for line. `REQUIRE_NODE=1` makes a missing Node a failure, as CI does.
 
 ## Credit
 

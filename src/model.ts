@@ -427,18 +427,20 @@ export const spanOf = (mins: number): string =>
   mins >= 1440
     ? `${String(Math.floor(mins / 1440))}d${String(Math.floor((mins % 1440) / 60))}h`
     : `${String(Math.floor(mins / 60))}h${String(mins % 60).padStart(2, "0")}m`;
-export const clock = (at: number): string =>
-  new Date(at).toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" });
-export const stamp = (at: number): string =>
-  new Date(at)
-    .toLocaleString("en-GB", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-    .replace(" at ", " ");
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const hourOf = (date: Date) =>
+  `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+/** A local time as `Fri 17:05`, and with its date as `Fri 13 Nov 17:05`. Written out, since each
+ *  runtime's own date formatter punctuates a little differently. */
+export function clock(at: number): string {
+  const date = new Date(at);
+  return `${DAYS[date.getDay()] ?? ""} ${hourOf(date)}`;
+}
+export function stamp(at: number): string {
+  const date = new Date(at);
+  return `${DAYS[date.getDay()] ?? ""} ${String(date.getDate())} ${MONTHS[date.getMonth()] ?? ""} ${hourOf(date)}`;
+}
 
 /** When the pool of `weeks` runs dry at `rate`, in % of one account's week an hour. */
 function forecast(weeks: readonly Week[], rate: number, now: number): string {

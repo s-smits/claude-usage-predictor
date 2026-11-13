@@ -6,8 +6,8 @@
  *   CLAUDE_CODE_OAUTH_TOKEN<N>       account `<N>`, as in CLAUDE_CODE_OAUTH_TOKEN2
  *   CLAUDE_CODE_OAUTH_TOKEN_<NAME>   account `<name>`, as in CLAUDE_CODE_OAUTH_TOKEN_WORK
  *
- * The tool opens no file of credentials and prints no token: Bun loads `.env`, or the file named
- * with `bun --env-file=<file>`, into the environment before the tool starts.
+ * The tool keeps no token and prints none. The runtime puts them in the environment from `.env`, or
+ * from the file named with `--env-file=<file>`: Bun by itself, Node when `cli.ts` asks it to.
  */
 export type Env = Readonly<Record<string, string | undefined>>;
 

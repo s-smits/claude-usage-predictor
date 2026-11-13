@@ -8,11 +8,23 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest Node line that runs the source as it stands, and the current one.
+        node: ["22", "24"]
+    env:
+      REQUIRE_NODE: "1"
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: package.json
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun test
+      # With no Bun in the picture at all: Node alone, straight from the source.
+      - run: node src/cli.ts demo --days 14 --accounts 2

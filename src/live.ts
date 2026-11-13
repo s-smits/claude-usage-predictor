@@ -11,6 +11,7 @@
  * account's own recent rise alone. A command that fails leaves the reading without a count, and
  * such a reading makes no row, since a guess of none would teach the model that busy hours are idle.
  */
+import { spawnSync } from "node:child_process";
 import type { Env } from "./accounts.ts";
 
 /** `spec`, such as `1:2,work:1`, as a count an account. */
@@ -51,8 +52,12 @@ export function liveCounts(env: Env, flag: string | undefined): Record<string, n
   if (flag !== undefined) return parseLive(flag);
   const command = env.CLAUDE_USAGE_LIVE_CMD;
   if (command === undefined || command.trim() === "") return {};
-  const ran = Bun.spawnSync(["sh", "-c", command], { stdout: "pipe", stderr: "ignore", timeout: 20_000 });
-  const counted = ran.exitCode === 0 ? countsOf(ran.stdout.toString()) : null;
+  const ran = spawnSync("sh", ["-c", command], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+    timeout: 20_000,
+  });
+  const counted = ran.status === 0 ? countsOf(ran.stdout) : null;
   if (counted === null) {
     console.error("CLAUDE_USAGE_LIVE_CMD gave no JSON object of counts: this reading keeps no live sessions");
   }

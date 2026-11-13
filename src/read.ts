@@ -12,6 +12,8 @@
  * Neither route is a documented public API. Both are what Claude Code itself reads, and either can
  * change without notice; a route that stops answering is reported as that account's error.
  */
+import { spawnSync } from "node:child_process";
+
 export interface Window {
   readonly pct: number | null;
   readonly resetsAt: string | null;
@@ -171,13 +173,13 @@ function planned(read: Read): Read {
 
 /** The user agent the routes send: the installed CLI's version, or a fallback where none answers. */
 function agentOf(): string {
-  let version: string | undefined;
-  try {
-    const ran = Bun.spawnSync(["claude", "--version"], { stdout: "pipe", stderr: "ignore" });
-    version = ran.exitCode === 0 ? ran.stdout.toString().trim().split(/\s+/)[0] : undefined;
-  } catch {
-    version = undefined;
-  }
+  // A missing `claude` is a status of null here, not a throw.
+  const ran = spawnSync("claude", ["--version"], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+    timeout: 10_000,
+  });
+  const version = ran.status === 0 ? ran.stdout.trim().split(/\s+/)[0] : undefined;
   return `claude-code/${version === undefined || version === "" ? "2.1.0" : version}`;
 }
 

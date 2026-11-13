@@ -15,6 +15,7 @@
  * `usage` for a timer: it keeps the reading and prints one line. `forecast` and `backtest` read the
  * kept history alone and ask no provider. `demo` runs both on a made-up history.
  */
+import { existsSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { accountsIn, poolOf, TOKEN } from "./accounts.ts";
 import { historyFile, KEPT_MS, keptReadings, writeReadings } from "./history.ts";
@@ -60,7 +61,7 @@ async function usage(args: readonly string[], quiet: boolean): Promise<void> {
   const tokens = accountsIn(env);
   if (tokens.size === 0) {
     throw new Error(
-      `no account here: set ${TOKEN}, ${TOKEN}<N> or ${TOKEN}_<NAME> in .env, or in a file named with bun --env-file=<file>`,
+      `no account here: set ${TOKEN}, ${TOKEN}<N> or ${TOKEN}_<NAME> in .env, or in a file named with --env-file=<file>`,
     );
   }
   const held = [...tokens.keys()];
@@ -274,7 +275,17 @@ const HELP = `claude-usage: how much of each Claude account's week is used, and 
 accounts come from the environment: ${TOKEN}, ${TOKEN}<N>, ${TOKEN}_<NAME>
 settings: CLAUDE_USAGE_POOL, CLAUDE_USAGE_LIVE_CMD, CLAUDE_USAGE_HISTORY, CLAUDE_USAGE_PROBE_MODEL`;
 
+/** Bun loads the `.env` of the folder it starts in by itself, and Node only when told. So under Node
+ *  the same file is loaded here, unless the command named one (`node --env-file=<file>`). A variable
+ *  the environment already holds stays as it is, under either. */
+function loadEnv(): void {
+  if (process.versions.bun !== undefined) return;
+  if (process.execArgv.some((flag) => flag.startsWith("--env-file"))) return;
+  if (existsSync(".env")) process.loadEnvFile(".env");
+}
+
 async function main(argv: readonly string[]): Promise<void> {
+  loadEnv();
   const [verb, ...rest] = argv;
   if (verb === "help" || verb === "--help" || verb === "-h") console.log(HELP);
   else if (verb === "record") await usage(rest, true);
