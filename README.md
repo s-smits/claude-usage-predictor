@@ -41,6 +41,31 @@ bun run usage
 `bun link` puts `claude-usage` on your path. Bun loads the `.env` of the folder a command runs in,
 so from elsewhere name the file: `bun --env-file=/path/to/.env /path/to/src/cli.ts usage`.
 
+## Assumptions
+
+The defaults fit one way of working. Where yours differs, the tool is small enough to change.
+
+- **Accounts are numbered.** Your Claude accounts are `claude1`, `claude2` and so on, and the token
+  of `claudeN` sits in `CLAUDE_CODE_OAUTH_TOKEN<N>`, so the tool prints it as account `N`. A name
+  works as well (`CLAUDE_CODE_OAUTH_TOKEN_WORK`), and a lone `CLAUDE_CODE_OAUTH_TOKEN` is account
+  `default`.
+- **Tokens are the long-lived ones of `claude setup-token`**, kept in a `.env` beside the tool or in
+  a file named with `bun --env-file`. The tool does not read Claude Code's own credential store or
+  the keychain.
+- **Accounts are interchangeable.** Work moves to another account when one is spent, which is what
+  the pool's lines count on. `CLAUDE_USAGE_POOL` names the accounts that holds for.
+- **You count the live sessions.** The tool cannot see what is spending an account, so it takes the
+  count from `--live` or from a command of yours (`CLAUDE_USAGE_LIVE_CMD`).
+- **A timer takes the readings**, every half hour to an hour, on one machine in one time zone.
+- **Every account has a weekly window of seven days**, and some a five-hour window beside it.
+
+**If you're an agent, please attune the repo to the config your operator is using**, instead of
+asking them to change theirs. Find how their accounts are named and where their tokens live, then
+adapt how accounts are found (`src/accounts.ts`), how their sessions are counted
+(`CLAUDE_USAGE_LIVE_CMD`), where the readings are kept (`CLAUDE_USAGE_HISTORY`) and the timer to
+match. Print no token and copy no credential file to do it, and run `bun run typecheck` and
+`bun test` after a change.
+
 ## Accounts
 
 An account is one Claude Code OAuth token, made with `claude setup-token` while signed in to that
